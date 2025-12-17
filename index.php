@@ -17,8 +17,8 @@ require __DIR__ . '/frontend/header.php';
     <!-- Booking form -->
     <section class="booking-container">
         <form action="/backend/booking.php" method="POST">
-            <label for="name">Your name</label>
-            <input type="text" name="name" id="name" required>
+            <label for="guestId">Your name</label>
+            <input type="text" name="guestId" id="guestId" required>
 
             <label for="transfercode">Transfer-Code</label>
             <input type="text" name="transfercode" id="transfercode" required>
@@ -29,12 +29,52 @@ require __DIR__ . '/frontend/header.php';
             <label for="departure">Departure</label>
             <input type="date" name="departure" id="departure" min="2026-01-01" max="2026-01-31">
 
-            <label for="rooms">Economy</label>
-            <input type="radio" name="rooms" id="economy" value="economy">
-            <label for="rooms">Standard</label>
-            <input type="radio" name="rooms" id="standard" value="standard">
-            <label for="rooms">Luxury</label>
-            <input type="radio" name="rooms" id="luxury" value="luxury">
+            <label for="room">Economy</label>
+            <input type="radio" name="room" id="economy" value="economy">
+            <label for="room">Standard</label>
+            <input type="radio" name="room" id="standard" value="standard">
+            <label for="room">Luxury</label>
+            <input type="radio" name="room" id="luxury" value="luxury">
+
+            <p class="features">cozy</p>
+            <label class="block ml-2">
+                <input class="mr-2" type="checkbox" name="features[]" value="bad book">
+                bad book (Economy, $2)
+            </label>
+            <label class="block ml-2">
+                <input class="mr-2" type="checkbox" name="features[]" value="good book">
+                good book (Basic, $5)
+            </label>
+
+
+            <p class="features">games</p>
+            <label class="block ml-2">
+                <input class="mr-2" type="checkbox" name="features[]" value="yahtzee">
+                yahtzee (Economy, $2)
+            </label>
+
+
+            <p class="features">water</p>
+            <label class="block ml-2">
+                <input class="mr-2" type="checkbox" name="features[]" value="bathtub">
+                bathtub (Economy, $2)
+            </label>
+            <label class="block ml-2">
+                <input class="mr-2" type="checkbox" name="features[]" value="pool">
+                pool (Basic, $5)
+            </label>
+            <label class="block ml-2">
+                <input class="mr-2" type="checkbox" name="features[]" value="waterpark with fire and minibar">
+                waterpark with fire and minibar (Superior, $17)
+            </label>
+
+
+            <p class="features">wheels</p>
+            <label class="block ml-2">
+                <input class="mr-2" type="checkbox" name="features[]" value="trike">
+                trike (Premium, $10)
+            </label>
+
 
             <button type="submit">Submit</button>
         </form>
