@@ -36,7 +36,6 @@ require __DIR__ . '/frontend/header.php';
             <label for="rooms">Luxury</label>
             <input type="radio" name="rooms" id="luxury" value="luxury">
 
-
             <button type="submit">Submit</button>
         </form>
     </section>
