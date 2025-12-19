@@ -1,23 +1,44 @@
 <?php
 
-if (isset($_POST['guestId'], $_POST['transfercode'], $_POST['arrival'], $_POST['departure'], $_POST['room'])) {
+declare(strict_types=1);
 
-    $guestId = htmlspecialchars($_POST['guestId'] ?? '');
-    $transfercode = htmlspecialchars($_POST['transfercode'] ?? '');
-    $arrival = htmlspecialchars($_POST['arrival'] ?? '');
-    $departure = htmlspecialchars($_POST['departure'] ?? '');
-    $room = htmlspecialchars($_POST['room']);
+if (isset(
+    $_POST['guest_name'],
+    $_POST['transfercode'],
+    $_POST['arrival'],
+    $_POST['departure'],
+    $_POST['room']
+)) {
+
+    $guestName = trim($_POST['guest_name']);
+    $transfercode = trim($_POST['transfercode']);
+    $arrival = ($_POST['arrival']);
+    $departure = ($_POST['departure']);
+    $room = ($_POST['room']);
 
     $featuresUsed = $_POST['features'] ?? [];
 
-    $database = new PDO('sqlite:database/database.db');
+    //database logic:
+    try {
+        $database = new PDO('sqlite:database/database.db');
+        $database->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    } catch (PDOException $e) {
+        echo $e->getMessage();
+    }
 
-    $statement = $database->query('SELECT * FROM rooms');
-    $rooms = $statement->fetchAll(PDO::FETCH_ASSOC);
 
-    var_dump($rooms);
+    $query = 'INSERT INTO guests (name, visits) VALUES (:name, :visits)';
+    $statement = $database->prepare($query);
 
-    //     foreach ($rooms as $room) {
-    //         var_dump($room);
-    //     }
-}
+    $guestName = trim($_POST['guest_name']);
+    $visits = 0;
+
+    $statement->bindParam(':name', $guestName, PDO::PARAM_STR);
+    $statement->bindParam(':visits', $visits, PDO::PARAM_INT);
+
+    $statement->execute();
+
+    $guestId = (int) $database->lastInsertId();
+};
+
+var_dump($guestId);

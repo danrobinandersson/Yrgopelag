@@ -11,14 +11,15 @@ require __DIR__ . '/frontend/header.php';
     <h1>Yrgopelag</h1>
 
     <!-- Calendar -->
+    <?php require __DIR__ . '/frontend/calendar.php' ?>
 
     <?php require __DIR__ . '/frontend/rooms.php' ?>
 
     <!-- Booking form -->
     <section class="booking-container">
         <form action="/backend/booking.php" method="POST">
-            <label for="guestId">Your name</label>
-            <input type="text" name="guestId" id="guestId" required>
+            <label for="guest_name">Your name</label>
+            <input type="text" name="guest_name" id="guest_name" required>
 
             <label for="transfercode">Transfer-Code</label>
             <input type="text" name="transfercode" id="transfercode" required>
