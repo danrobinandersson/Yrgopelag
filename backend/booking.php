@@ -16,15 +16,19 @@ if (isset(
         $database->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     } catch (PDOException $e) {
         echo $e->getMessage();
+        exit;
     }
 
     // ROOM LOOKUP
+
     $roomTier = $_POST['room'];
 
-    $query = 'SELECT id FROM rooms WHERE tier = :tier LIMIT 1';
-    $stmt = $database->prepare($query);
-    $stmt->bindParam(':tier', $roomTier, PDO::PARAM_STR);
-    $stmt->execute();
+    $stmt = $database->prepare(
+        'SELECT id FROM rooms WHERE tier = :tier LIMIT 1'
+    );
+    $stmt->execute([
+        ':tier' => $roomTier
+    ]);
 
     $room = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -36,6 +40,7 @@ if (isset(
     $roomId = (int) $room['id'];
 
     // DATE VALIDATION
+
     $arrival = $_POST['arrival'];
     $departure = $_POST['departure'];
 
@@ -50,17 +55,19 @@ if (isset(
     }
 
     // AVAILABILITY CHECK
-    $query = ' SELECT COUNT(*) FROM bookings
-      WHERE room_id = :room_id
-      AND arrival_date < :departure
-      AND departure_date > :arrival
-';
 
-    $stmt = $database->prepare($query);
-    $stmt->bindParam(':room_id', $roomId, PDO::PARAM_INT);
-    $stmt->bindParam(':arrival', $arrival);
-    $stmt->bindParam(':departure', $departure);
-    $stmt->execute();
+    $stmt = $database->prepare(
+        'SELECT COUNT(*) FROM bookings
+         WHERE room_id = :room_id
+           AND arrival_date < :departure
+           AND departure_date > :arrival'
+    );
+
+    $stmt->execute([
+        ':room_id'   => $roomId,
+        ':arrival'   => $arrival,
+        ':departure' => $departure
+    ]);
 
     $overlapCount = (int) $stmt->fetchColumn();
 
@@ -69,39 +76,136 @@ if (isset(
         exit;
     }
 
+    // GUEST LOOKUP
+
     $guestName = trim($_POST['guest_name']);
 
-    // Check if guest exists
-    $query = 'SELECT id, visits FROM guests WHERE name = :name LIMIT 1';
-    $stmt = $database->prepare($query);
-    $stmt->bindParam(':name', $guestName, PDO::PARAM_STR);
-    $stmt->execute();
+    $stmt = $database->prepare(
+        'SELECT id, visits FROM guests WHERE name = :name LIMIT 1'
+    );
+    $stmt->execute([
+        ':name' => $guestName
+    ]);
 
     $guest = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    // Update or insert guest
+
+    // INSERT / UPDATE GUEST
+
     if ($guest !== false) {
-        // Existing guest
         $guestId = (int) $guest['id'];
         $newVisits = (int) $guest['visits'] + 1;
 
-        $update = 'UPDATE guests SET visits = :visits WHERE id = :id';
-        $updateStmt = $database->prepare($update);
-        $updateStmt->bindParam(':visits', $newVisits, PDO::PARAM_INT);
-        $updateStmt->bindParam(':id', $guestId, PDO::PARAM_INT);
-        $updateStmt->execute();
+        $stmt = $database->prepare(
+            'UPDATE guests SET visits = :visits WHERE id = :id'
+        );
+        $stmt->execute([
+            ':visits' => $newVisits,
+            ':id'     => $guestId
+        ]);
     } else {
-        // New guest
-        $insert = 'INSERT INTO guests (name, visits) VALUES (:name, 1)';
-        $insertStmt = $database->prepare($insert);
-        $insertStmt->bindParam(':name', $guestName, PDO::PARAM_STR);
-        $insertStmt->execute();
+        $stmt = $database->prepare(
+            'INSERT INTO guests (name, visits) VALUES (:name, 1)'
+        );
+        $stmt->execute([
+            ':name' => $guestName
+        ]);
 
         $guestId = (int) $database->lastInsertId();
     }
 
-    // $arrivalDate = new DateTime($arrival);
-    // $departureDate = new DateTime($departure);
+    // PRICE CALCULATION
 
-    // $nights = (int) $arrivalDate->diff($departureDate)->days;
+    $arrivalDate = new DateTime($arrival);
+    $departureDate = new DateTime($departure);
+
+    $nights = (int) $arrivalDate->diff($departureDate)->days;
+
+    $stmt = $database->prepare(
+        'SELECT price_per_night FROM rooms WHERE id = :id'
+    );
+    $stmt->execute([
+        ':id' => $roomId
+    ]);
+
+    $room = $stmt->fetch(PDO::FETCH_ASSOC);
+    $roomPrice = (float) $room['price_per_night'];
+
+    $roomTotal = $roomPrice * $nights;
+
+    // Look up features in the database
+
+    $featuresUsed = $_POST['features'] ?? [];
+
+    $featureTotal = 0;
+    $featureIds = [];
+
+    if (!empty($featuresUsed)) {
+        $placeholders = implode(',', array_fill(0, count($featuresUsed), '?'));
+
+        $stmt = $database->prepare(
+            "SELECT id, price FROM features WHERE feature_name IN ($placeholders)"
+        );
+        $stmt->execute($featuresUsed);
+
+        $features = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($features as $feature) {
+            $featureTotal += (float) $feature['price'];
+            $featureIds[] = (int) $feature['id'];
+        }
+    }
+
+    // calculate booking price
+
+    $totalPrice = $roomTotal + $featureTotal;
+
+    // insert booking into bookings table
+
+    $transfercode = trim($_POST['transfercode']);
+
+    $stmt = $database->prepare(
+        'INSERT INTO bookings (
+        guest_id,
+        room_id,
+        arrival_date,
+        departure_date,
+        total_price,
+        transfercode
+     ) VALUES (
+        :guest_id,
+        :room_id,
+        :arrival,
+        :departure,
+        :total_price,
+        :transfercode
+     )'
+    );
+
+    $stmt->execute([
+        ':guest_id'    => $guestId,
+        ':room_id'     => $roomId,
+        ':arrival'     => $arrival,
+        ':departure'   => $departure,
+        ':total_price' => $totalPrice,
+        ':transfercode' => $transfercode
+    ]);
+
+    $bookingId = (int) $database->lastInsertId();
+
+    // insert features into booking_features (junction table)
+
+    if (!empty($featureIds)) {
+        $stmt = $database->prepare(
+            'INSERT INTO bookings_features (booking_id, feature_id)
+         VALUES (:booking_id, :feature_id)'
+        );
+
+        foreach ($featureIds as $featureId) {
+            $stmt->execute([
+                ':booking_id' => $bookingId,
+                ':feature_id' => $featureId
+            ]);
+        }
+    }
 }
