@@ -193,6 +193,19 @@ if (isset(
 
     $bookingId = (int) $database->lastInsertId();
 
+    // BOOKING CONFIRMATION
+
+    echo '<h2>Booking confirmed</h2>';
+    echo '<p>Thank you, ' . htmlspecialchars($guestName) . '!</p>';
+    echo '<p><strong>Arrival:</strong> ' . $arrival . '</p>';
+    echo '<p><strong>Departure:</strong> ' . $departure . '</p>';
+    echo '<p><strong>Total price:</strong> $' . number_format($totalPrice, 2) . '</p>';
+    echo '<p><strong>Booking reference:</strong> ' . htmlspecialchars($transfercode) . '</p>';
+    if (!empty($featuresUsed)) {
+        echo '<p><strong>Features:</strong> ' . htmlspecialchars(implode(', ', $featuresUsed)) . '</p>';
+    }
+
+    exit;
     // insert features into booking_features (junction table)
 
     if (!empty($featureIds)) {

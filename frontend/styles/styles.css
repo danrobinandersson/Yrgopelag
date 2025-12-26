@@ -2,6 +2,20 @@
   box-sizing: border-box;
 }
 
+:root {
+  --color-lava-red: #c0392b;
+  --color-molten-orange: #e67e22;
+  --color-charcoal-black: #1c1c1c;
+  --color-jungle-green: #2e7d32;
+  --color-ash-gray: #7f8c8d;
+  --color-warm-sand: #efe6d8;
+  --color-text-dark: #1c1c1c;
+  --color-text-light: #ffffff;
+  --color-border-muted: #dadada;
+}
+
+/* calendar */
+
 .calendar {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
