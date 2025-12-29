@@ -2,10 +2,17 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/vendor/autoload.php';
-require_once __DIR__ . '/centralBankClient.php';
+require_once __DIR__ . '/../vendor/autoload.php';
+// Composer packages
+require_once __DIR__ . '/Services/CentralBankClient.php';
 
+use Dotenv\Dotenv;
 use App\Services\CentralBankClient;
+
+$dotenv = Dotenv::createImmutable(__DIR__);
+$dotenv->load();
+
+$centralBank = new CentralBankClient();
 
 if (isset(
     $_POST['guest_name'],
@@ -17,7 +24,7 @@ if (isset(
 
     // Connect to database
     try {
-        $database = new PDO('sqlite:database/database.db');
+        $database = new PDO('sqlite:' . __DIR__ . '/database/database.db');
         $database->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     } catch (PDOException $e) {
         echo $e->getMessage();
@@ -26,12 +33,8 @@ if (isset(
 
     // ROOM LOOKUP
     $roomTier = $_POST['room'];
-
-    $stmt = $database->prepare('SELECT id, price_per_night FROM rooms WHERE tier = 
-    :tier LIMIT 1');
-    $stmt->execute([
-        ':tier' => $roomTier
-    ]);
+    $stmt = $database->prepare('SELECT id, price_per_night FROM rooms WHERE tier = :tier LIMIT 1');
+    $stmt->execute([':tier' => $roomTier]);
     $room = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($room === false) {
@@ -59,8 +62,8 @@ if (isset(
     // AVAILABILITY CHECK
     $stmt = $database->prepare(
         'SELECT COUNT(*) FROM bookings WHERE room_id = :room_id 
-            AND arrival_date < :departure 
-            AND departure_date > :arrival'
+         AND arrival_date < :departure 
+         AND departure_date > :arrival'
     );
     $stmt->execute([
         ':room_id'   => $roomId,
@@ -75,11 +78,8 @@ if (isset(
 
     // GUEST LOOKUP
     $guestName = trim($_POST['guest_name']);
-    $stmt = $database->prepare('SELECT id, visits FROM guests WHERE 
-    name = :name LIMIT 1');
-    $stmt->execute([
-        ':name' => $guestName
-    ]);
+    $stmt = $database->prepare('SELECT id, visits FROM guests WHERE name = :name LIMIT 1');
+    $stmt->execute([':name' => $guestName]);
     $guest = $stmt->fetch(PDO::FETCH_ASSOC);
 
     // INSERT / UPDATE GUEST
@@ -87,15 +87,10 @@ if (isset(
         $guestId = (int) $guest['id'];
         $newVisits = (int) $guest['visits'] + 1;
         $stmt = $database->prepare('UPDATE guests SET visits = :visits WHERE id = :id');
-        $stmt->execute([
-            ':visits' => $newVisits,
-            ':id' => $guestId
-        ]);
+        $stmt->execute([':visits' => $newVisits, ':id' => $guestId]);
     } else {
         $stmt = $database->prepare('INSERT INTO guests (name, visits) VALUES (:name, 1)');
-        $stmt->execute([
-            ':name' => $guestName
-        ]);
+        $stmt->execute([':name' => $guestName]);
         $guestId = (int) $database->lastInsertId();
     }
 
@@ -103,7 +98,6 @@ if (isset(
     $arrivalDate = new DateTime($arrival);
     $departureDate = new DateTime($departure);
     $nights = (int) $arrivalDate->diff($departureDate)->days;
-
     $roomTotal = $roomPrice * $nights;
 
     // FEATURES CALCULATION
@@ -127,7 +121,7 @@ if (isset(
 
     $transferCode = trim($_POST['transfercode']);
     $centralBank = new CentralBankClient();
-    $hotelOwner = 'Robin'; // replace with your hotel owner username
+    $hotelOwner = 'Robin';
 
     // VALIDATE TRANSFER CODE
     if (!$centralBank->validateTransferCode($transferCode, (int)$totalPrice)) {
@@ -147,11 +141,11 @@ if (isset(
          VALUES (:guest_id, :room_id, :arrival, :departure, :total_price, :transfercode)'
     );
     $stmt->execute([
-        ':guest_id'    => $guestId,
-        ':room_id'     => $roomId,
-        ':arrival'     => $arrival,
-        ':departure'   => $departure,
-        ':total_price' => $totalPrice,
+        ':guest_id'     => $guestId,
+        ':room_id'      => $roomId,
+        ':arrival'      => $arrival,
+        ':departure'    => $departure,
+        ':total_price'  => $totalPrice,
         ':transfercode' => $transferCode
     ]);
     $bookingId = (int)$database->lastInsertId();
@@ -166,7 +160,18 @@ if (isset(
 
     // SEND RECEIPT
     $featureObjects = array_map(fn($f) => ['activity' => $f, 'tier' => ''], $featuresUsed);
-    $centralBank->sendReceipt($hotelOwner, $guestName, $arrival, $departure, $featureObjects, 1);
+    $receiptSent = $centralBank->sendReceipt(
+        $hotelOwner,
+        $guestName,
+        $arrival,
+        $departure,
+        $featureObjects,
+        1
+    );
+
+    if (!$receiptSent) {
+        error_log('CentralBank receipt failed for booking ID: ' . $bookingId);
+    }
 
     // BOOKING CONFIRMATION
     echo '<h2>Booking confirmed</h2>';

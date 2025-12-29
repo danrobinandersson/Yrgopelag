@@ -19,9 +19,6 @@ class CentralBankClient
         ]);
     }
 
-
-    //  Validate a transfer code without consuming it
-
     public function validateTransferCode(string $transferCode, int $totalCost): bool
     {
         try {
@@ -33,15 +30,11 @@ class CentralBankClient
             ]);
 
             $data = json_decode((string) $response->getBody(), true);
-
             return isset($data['status']) && $data['status'] === 'success';
         } catch (GuzzleException $e) {
             return false;
         }
     }
-
-
-    //   Consume the transfer code and receive the money
 
     public function deposit(string $user, string $transferCode): bool
     {
@@ -54,15 +47,12 @@ class CentralBankClient
             ]);
 
             $data = json_decode((string) $response->getBody(), true);
-
             return isset($data['status']) && $data['status'] === 'success';
         } catch (GuzzleException $e) {
+            error_log('CentralBankClient error: ' . $e->getMessage());
             return false;
         }
     }
-
-
-    //  Send a receipt of the booking to the central bank
 
     public function sendReceipt(
         string $hotelOwner,
@@ -75,13 +65,13 @@ class CentralBankClient
         try {
             $response = $this->client->post('receipt', [
                 'json' => [
-                    'user'          => $hotelOwner,
-                    'api_key'       => '',
-                    'guest_name'    => $guestName,
-                    'arrival_date'  => $arrival,
+                    'user'           => $hotelOwner,
+                    'api_key'        => $_ENV['API_KEY'],
+                    'guest_name'     => $guestName,
+                    'arrival_date'   => $arrival,
                     'departure_date' => $departure,
-                    'features_used' => $featuresUsed,
-                    'star_rating'   => $starRating
+                    'features_used'  => $featuresUsed,
+                    'star_rating'    => $starRating,
                 ],
             ]);
 
