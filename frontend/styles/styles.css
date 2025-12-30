@@ -14,6 +14,17 @@
   --color-border-muted: #dadada;
 }
 
+.logo {
+  height: 20rem;
+  width: 20rem;
+}
+
+.header_container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--color-ash-gray);
+}
 /* calendar */
 
 .calendar {

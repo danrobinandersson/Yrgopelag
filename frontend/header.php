@@ -7,3 +7,9 @@
     <title>Yrgopelag</title>
     <link rel="stylesheet" href="/frontend/styles/styles.css">
 </head>
+
+<body>
+
+    <div class="header_container">
+        <img class="logo" src="/resources/Images/Logo-main.png" alt="Logo">
+    </div>
