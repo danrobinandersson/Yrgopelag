@@ -3,184 +3,257 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../vendor/autoload.php';
-// Composer packages
 require_once __DIR__ . '/Services/CentralBankClient.php';
 
 use Dotenv\Dotenv;
 use App\Services\CentralBankClient;
 
+// Load environment variables
 $dotenv = Dotenv::createImmutable(__DIR__);
 $dotenv->load();
 
 $centralBank = new CentralBankClient();
 
-if (isset(
-    $_POST['guest_name'],
-    $_POST['transfercode'],
-    $_POST['arrival'],
-    $_POST['departure'],
-    $_POST['room']
-)) {
+// Basic POST validation
+if (
+    !isset(
+        $_POST['guest_name'],
+        $_POST['transfercode'],
+        $_POST['arrival'],
+        $_POST['departure'],
+        $_POST['room']
+    )
+) {
+    echo 'Invalid booking request';
+    exit;
+}
 
-    // Connect to database
-    try {
-        $database = new PDO('sqlite:' . __DIR__ . '/database/database.db');
-        $database->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    } catch (PDOException $e) {
-        echo $e->getMessage();
-        exit;
-    }
+// Connect to database
+try {
+    $database = new PDO('sqlite:' . __DIR__ . '/database/database.db');
+    $database->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch (PDOException $e) {
+    echo 'Database connection failed';
+    exit;
+}
 
-    // ROOM LOOKUP
-    $roomTier = $_POST['room'];
-    $stmt = $database->prepare('SELECT id, price_per_night FROM rooms WHERE tier = :tier LIMIT 1');
-    $stmt->execute([':tier' => $roomTier]);
-    $room = $stmt->fetch(PDO::FETCH_ASSOC);
+// INPUT VALIDATION
 
-    if ($room === false) {
-        echo 'Invalid room selected';
-        exit;
-    }
+$guestName    = trim($_POST['guest_name']);
+$transferCode = trim($_POST['transfercode']);
+$arrival      = $_POST['arrival'];
+$departure    = $_POST['departure'];
+$roomTier     = $_POST['room'];
+$featuresUsed = $_POST['features'] ?? [];
+$hotelOwner   = 'Robin';
 
-    $roomId = (int) $room['id'];
-    $roomPrice = (float) $room['price_per_night'];
+if ($guestName === '') {
+    echo 'Guest name is required';
+    exit;
+}
 
-    // DATE VALIDATION
-    $arrival = $_POST['arrival'];
-    $departure = $_POST['departure'];
+if ($arrival === '' || $departure === '') {
+    echo 'You must select both arrival and departure dates';
+    exit;
+}
 
-    if ($arrival === '' || $departure === '') {
-        echo 'You must select both arrival and departure dates';
-        exit;
-    }
+if ($arrival >= $departure) {
+    echo 'Departure must be after arrival';
+    exit;
+}
 
-    if ($arrival >= $departure) {
-        echo 'Departure must be after arrival';
-        exit;
-    }
+// ROOM LOOKUP
 
-    // AVAILABILITY CHECK
+$stmt = $database->prepare(
+    'SELECT id, price_per_night FROM rooms WHERE tier = :tier LIMIT 1'
+);
+$stmt->execute([':tier' => $roomTier]);
+$room = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if ($room === false) {
+    echo 'Invalid room selected';
+    exit;
+}
+
+$roomId    = (int) $room['id'];
+$roomPrice = (float) $room['price_per_night'];
+
+// AVAILABILITY CHECK
+
+$stmt = $database->prepare(
+    'SELECT COUNT(*) FROM bookings
+     WHERE room_id = :room_id
+     AND arrival_date < :departure
+     AND departure_date > :arrival'
+);
+
+$stmt->execute([
+    ':room_id'   => $roomId,
+    ':arrival'   => $arrival,
+    ':departure' => $departure,
+]);
+
+if ((int) $stmt->fetchColumn() > 0) {
+    echo 'Selected room is not available for these dates';
+    exit;
+}
+
+// GUEST LOOKUP (for loyalty discount)
+
+$stmt = $database->prepare(
+    'SELECT id, visits FROM guests WHERE name = :name LIMIT 1'
+);
+$stmt->execute([':name' => $guestName]);
+$guest = $stmt->fetch(PDO::FETCH_ASSOC);
+
+$visits = $guest ? (int) $guest['visits'] : 0;
+
+
+// PRICE CALCULATION
+
+$nights     = (int) (new DateTime($arrival))->diff(new DateTime($departure))->days;
+$roomTotal  = $roomPrice * $nights;
+$featureTotal = 0;
+$featureIds = [];
+
+if (!empty($featuresUsed)) {
+    $placeholders = implode(',', array_fill(0, count($featuresUsed), '?'));
     $stmt = $database->prepare(
-        'SELECT COUNT(*) FROM bookings WHERE room_id = :room_id 
-         AND arrival_date < :departure 
-         AND departure_date > :arrival'
+        "SELECT id, price FROM features WHERE feature_name IN ($placeholders)"
     );
-    $stmt->execute([
-        ':room_id'   => $roomId,
-        ':arrival'   => $arrival,
-        ':departure' => $departure
-    ]);
-    $overlapCount = (int) $stmt->fetchColumn();
-    if ($overlapCount > 0) {
-        echo 'Selected room is not available for these dates';
-        exit;
-    }
+    $stmt->execute($featuresUsed);
 
-    // GUEST LOOKUP
-    $guestName = trim($_POST['guest_name']);
-    $stmt = $database->prepare('SELECT id, visits FROM guests WHERE name = :name LIMIT 1');
+    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $feature) {
+        $featureTotal += (float) $feature['price'];
+        $featureIds[] = (int) $feature['id'];
+    }
+}
+
+$totalPrice = $roomTotal + $featureTotal;
+
+// Loyalty discount
+$discountPercent = 0;
+
+if ($visits >= 5) {
+    $discountPercent = 10;
+} elseif ($visits >= 2) {
+    $discountPercent = 5;
+}
+
+if ($discountPercent > 0) {
+    $discountAmount = ($totalPrice * $discountPercent) / 100;
+    $totalPrice -= $discountAmount;
+}
+
+// CENTRAL BANK
+
+if (!$centralBank->validateTransferCode($transferCode, (int) $totalPrice)) {
+    echo 'Invalid or insufficient transfer code';
+    exit;
+}
+
+if (!$centralBank->deposit($hotelOwner, $transferCode)) {
+    echo 'Payment failed. Booking not completed.';
+    exit;
+}
+
+// DATABASE TRANSACTION
+
+try {
+    $database->beginTransaction();
+
+    // Guest lookup
+    $stmt = $database->prepare(
+        'SELECT id, visits FROM guests WHERE name = :name LIMIT 1'
+    );
     $stmt->execute([':name' => $guestName]);
     $guest = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    // INSERT / UPDATE GUEST
-    if ($guest !== false) {
+    if ($guest) {
         $guestId = (int) $guest['id'];
-        $newVisits = (int) $guest['visits'] + 1;
-        $stmt = $database->prepare('UPDATE guests SET visits = :visits WHERE id = :id');
-        $stmt->execute([':visits' => $newVisits, ':id' => $guestId]);
+        $stmt = $database->prepare(
+            'UPDATE guests SET visits = visits + 1 WHERE id = :id'
+        );
+        $stmt->execute([':id' => $guestId]);
     } else {
-        $stmt = $database->prepare('INSERT INTO guests (name, visits) VALUES (:name, 1)');
+        $stmt = $database->prepare(
+            'INSERT INTO guests (name, visits) VALUES (:name, 1)'
+        );
         $stmt->execute([':name' => $guestName]);
         $guestId = (int) $database->lastInsertId();
     }
 
-    // PRICE CALCULATION
-    $arrivalDate = new DateTime($arrival);
-    $departureDate = new DateTime($departure);
-    $nights = (int) $arrivalDate->diff($departureDate)->days;
-    $roomTotal = $roomPrice * $nights;
-
-    // FEATURES CALCULATION
-    $featuresUsed = $_POST['features'] ?? [];
-    $featureTotal = 0;
-    $featureIds = [];
-
-    if (!empty($featuresUsed)) {
-        $placeholders = implode(',', array_fill(0, count($featuresUsed), '?'));
-        $stmt = $database->prepare("SELECT id, price FROM features WHERE feature_name IN ($placeholders)");
-        $stmt->execute($featuresUsed);
-        $features = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        foreach ($features as $feature) {
-            $featureTotal += (float) $feature['price'];
-            $featureIds[] = (int) $feature['id'];
-        }
-    }
-
-    $totalPrice = $roomTotal + $featureTotal;
-
-    $transferCode = trim($_POST['transfercode']);
-    $centralBank = new CentralBankClient();
-    $hotelOwner = 'Robin';
-
-    // VALIDATE TRANSFER CODE
-    if (!$centralBank->validateTransferCode($transferCode, (int)$totalPrice)) {
-        echo 'Invalid or insufficient transfer code';
-        exit;
-    }
-
-    // DEPOSIT MONEY
-    if (!$centralBank->deposit($hotelOwner, $transferCode)) {
-        echo 'Payment failed. Booking not completed.';
-        exit;
-    }
-
-    // INSERT BOOKING
+    // Insert booking
     $stmt = $database->prepare(
-        'INSERT INTO bookings (guest_id, room_id, arrival_date, departure_date, total_price, transfercode)
-         VALUES (:guest_id, :room_id, :arrival, :departure, :total_price, :transfercode)'
+        'INSERT INTO bookings
+        (guest_id, room_id, arrival_date, departure_date, total_price, transfercode)
+        VALUES
+        (:guest_id, :room_id, :arrival, :departure, :total_price, :transfercode)'
     );
+
     $stmt->execute([
         ':guest_id'     => $guestId,
         ':room_id'      => $roomId,
         ':arrival'      => $arrival,
         ':departure'    => $departure,
         ':total_price'  => $totalPrice,
-        ':transfercode' => $transferCode
+        ':transfercode' => $transferCode,
     ]);
-    $bookingId = (int)$database->lastInsertId();
 
-    // INSERT FEATURES
+    $bookingId = (int) $database->lastInsertId();
+
+    // Booking features
     if (!empty($featureIds)) {
-        $stmt = $database->prepare('INSERT INTO bookings_features (booking_id, feature_id) VALUES (:booking_id, :feature_id)');
+        $stmt = $database->prepare(
+            'INSERT INTO bookings_features (booking_id, feature_id)
+             VALUES (:booking_id, :feature_id)'
+        );
+
         foreach ($featureIds as $featureId) {
-            $stmt->execute([':booking_id' => $bookingId, ':feature_id' => $featureId]);
+            $stmt->execute([
+                ':booking_id' => $bookingId,
+                ':feature_id' => $featureId,
+            ]);
         }
     }
 
-    // SEND RECEIPT
-    $featureObjects = array_map(fn($f) => ['activity' => $f, 'tier' => ''], $featuresUsed);
-    $receiptSent = $centralBank->sendReceipt(
-        $hotelOwner,
-        $guestName,
-        $arrival,
-        $departure,
-        $featureObjects,
-        1
-    );
+    $database->commit();
+} catch (Throwable $e) {
+    $database->rollBack();
+    echo 'Booking failed. Please try again.';
+    exit;
+}
 
-    if (!$receiptSent) {
-        error_log('CentralBank receipt failed for booking ID: ' . $bookingId);
-    }
+// SEND RECEIPT (AFTER COMMIT)
 
-    // BOOKING CONFIRMATION
-    echo '<h2>Booking confirmed</h2>';
-    echo '<p>Thank you, ' . htmlspecialchars($guestName) . '!</p>';
-    echo '<p><strong>Arrival:</strong> ' . $arrival . '</p>';
-    echo '<p><strong>Departure:</strong> ' . $departure . '</p>';
-    echo '<p><strong>Total price:</strong> $' . number_format($totalPrice, 2) . '</p>';
-    echo '<p><strong>Booking reference:</strong> ' . htmlspecialchars($transferCode) . '</p>';
-    if (!empty($featuresUsed)) {
-        echo '<p><strong>Features:</strong> ' . htmlspecialchars(implode(', ', $featuresUsed)) . '</p>';
-    }
+$featureObjects = array_map(
+    fn($f) => ['activity' => $f, 'tier' => ''],
+    $featuresUsed
+);
+
+if (!$centralBank->sendReceipt(
+    $hotelOwner,
+    $guestName,
+    $arrival,
+    $departure,
+    $featureObjects,
+    1
+)) {
+    error_log('Receipt failed for booking ID: ' . $bookingId);
+}
+
+// CONFIRMATION
+
+echo '<h2>Booking confirmed</h2>';
+echo '<p>Thank you, ' . htmlspecialchars($guestName) . '!</p>';
+echo '<p><strong>Arrival:</strong> ' . $arrival . '</p>';
+echo '<p><strong>Departure:</strong> ' . $departure . '</p>';
+echo '<p><strong>Total price:</strong> $' . number_format($totalPrice, 2) . '</p>';
+echo '<p><strong>Booking reference:</strong> ' . htmlspecialchars($transferCode) . '</p>';
+
+if (!empty($featuresUsed)) {
+    echo '<p><strong>Features:</strong> ' . htmlspecialchars(implode(', ', $featuresUsed)) . '</p>';
+}
+if ($discountPercent > 0) {
+    echo '<p><strong>Loyalty discount:</strong> ' . $discountPercent . '%</p>';
 }
