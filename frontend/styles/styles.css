@@ -14,17 +14,19 @@
   --color-border-muted: #dadada;
 }
 
-.logo {
-  height: 20rem;
-  width: 20rem;
+.roboto {
+  font-family: "Roboto", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 300;
+  font-style: normal;
+  font-variation-settings: "wdth" 100;
 }
 
-.header_container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: var(--color-ash-gray);
+body {
+  background-color: var(--color-warm-sand);
+  font-family: "Roboto";
 }
+
 /* calendar */
 
 .calendar {

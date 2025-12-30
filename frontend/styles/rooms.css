@@ -1,0 +1,19 @@
+.room_section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.rooms_container {
+  display: flex;
+  justify-content: space-around;
+}
+
+.room_card {
+  width: 30%;
+}
+
+img {
+  width: 100%;
+  height: 300px;
+}
