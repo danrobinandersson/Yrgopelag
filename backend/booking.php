@@ -226,20 +226,26 @@ try {
 
 // SEND RECEIPT (AFTER COMMIT)
 
-$featureObjects = array_map(
-    fn($f) => ['activity' => $f, 'tier' => ''],
-    $featuresUsed
-);
+// Build features_used for receipt (category + tier)
+$featureObjects = [];
 
-if (!$centralBank->sendReceipt(
-    $hotelOwner,
-    $guestName,
-    $arrival,
-    $departure,
-    $featureObjects,
-    1
-)) {
-    error_log('Receipt failed for booking ID: ' . $bookingId);
+if (!empty($featuresUsed)) {
+    $placeholders = implode(',', array_fill(0, count($featuresUsed), '?'));
+
+    $stmt = $database->prepare(
+        "SELECT category, tier
+         FROM features
+         WHERE feature_name IN ($placeholders)"
+    );
+
+    $stmt->execute($featuresUsed);
+
+    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $feature) {
+        $featureObjects[] = [
+            'activity' => $feature['category'],
+            'tier'     => $feature['tier'],
+        ];
+    }
 }
 
 // CONFIRMATION

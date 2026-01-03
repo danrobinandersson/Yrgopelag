@@ -11,6 +11,7 @@
 
 .room_card {
   width: 30%;
+  background-color: var(--color-lava-red);
 }
 
 img {
