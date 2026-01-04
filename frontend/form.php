@@ -24,19 +24,19 @@
         <div class="booking_features">
             <h3 class="features">Adventure</h3>
             <label class="block ml-2">
-                <input class="mr-2" type="checkbox" name="features[]" value="marshmallow roasting">
+                <input class="mr-2" type="checkbox" name="features[]" value="13">
                 Marshmallow roasting over lava stream (Economy, $2)
             </label>
             <label class="block ml-2">
-                <input class="mr-2" type="checkbox" name="features[]" value="island trails">
+                <input class="mr-2" type="checkbox" name="features[]" value="14">
                 Access to marked island trails (Basic, $5)
             </label>
             <label class="block ml-2">
-                <input class="mr-2" type="checkbox" name="features[]" value="volcano tour">
+                <input class="mr-2" type="checkbox" name="features[]" value="15">
                 Volcano tour with expert guide (Premium, $8)
             </label>
             <label class="block ml-2">
-                <input class="mr-2" type="checkbox" name="features[]" value="skydiving">
+                <input class="mr-2" type="checkbox" name="features[]" value="16">
                 Skydiving over volcano (Superior, $10)
             </label>
 

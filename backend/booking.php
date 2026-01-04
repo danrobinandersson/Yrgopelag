@@ -111,21 +111,31 @@ $visits = $guest ? (int) $guest['visits'] : 0;
 
 // PRICE CALCULATION
 
-$nights     = (int) (new DateTime($arrival))->diff(new DateTime($departure))->days;
-$roomTotal  = $roomPrice * $nights;
+$nights = (int) (new DateTime($arrival))->diff(new DateTime($departure))->days;
+$roomTotal = $roomPrice * $nights;
+
+$featuresUsed = $_POST['features'] ?? [];
+
+$featureIds = array_map('intval', $featuresUsed);
+
 $featureTotal = 0;
-$featureIds = [];
+$featureObjects = [];
 
-if (!empty($featuresUsed)) {
-    $placeholders = implode(',', array_fill(0, count($featuresUsed), '?'));
+if (!empty($featureIds)) {
+    $placeholders = implode(',', array_fill(0, count($featureIds), '?'));
     $stmt = $database->prepare(
-        "SELECT id, price FROM features WHERE feature_name IN ($placeholders)"
+        "SELECT id, category, tier, price, feature_name FROM features WHERE id IN ($placeholders)"
     );
-    $stmt->execute($featuresUsed);
+    $stmt->execute($featureIds);
 
-    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $feature) {
+    $fetchedFeatures = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    foreach ($fetchedFeatures as $feature) {
         $featureTotal += (float) $feature['price'];
-        $featureIds[] = (int) $feature['id'];
+        $featureObjects[] = [
+            'activity' => $feature['category'],
+            'tier'     => $feature['tier'],
+        ];
     }
 }
 
@@ -142,7 +152,6 @@ if ($discountPercent > 0) {
     $discountAmount = ($totalPrice * $discountPercent) / 100;
     $totalPrice -= $discountAmount;
 }
-
 
 // CENTRAL BANK
 
@@ -256,8 +265,9 @@ echo '<p><strong>Departure:</strong> ' . $departure . '</p>';
 echo '<p><strong>Total price:</strong> $' . number_format($totalPrice, 2) . '</p>';
 echo '<p><strong>Booking reference:</strong> ' . htmlspecialchars($transferCode) . '</p>';
 
-if (!empty($featuresUsed)) {
-    echo '<p><strong>Features:</strong> ' . htmlspecialchars(implode(', ', $featuresUsed)) . '</p>';
+if (!empty($featureObjects)) {
+    $featureNames = array_map(fn($f) => $f['feature_name'], $featureObjects);
+    echo '<p><strong>Features:</strong> ' . htmlspecialchars(implode(', ', $featureNames)) . '</p>';
 }
 if ($discountPercent > 0) {
     echo '<p><strong>Loyalty discount:</strong> ' . $discountPercent . '%</p>';
