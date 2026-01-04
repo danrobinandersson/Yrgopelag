@@ -8,7 +8,7 @@ require __DIR__ . '/../backend/calendar.php';
 
     <div class="rooms_container">
         <div class="room_card">
-            <p>$1</p>
+            <h3 class="price">Price: $4</h3>
             <img src="resources/Images/Economy-tent.png" alt="Economy tent">
             <p>Tent description</p>
             <section class="calendar">
@@ -17,7 +17,7 @@ require __DIR__ . '/../backend/calendar.php';
 
         </div>
         <div class="room_card">
-            <p>$2</p>
+            <h3 class="price">Price: $6</h3>
             <img src="resources/Images/Standard-tent.png" alt="Standard tent">
             <p>Tent description</p>
             <section class="calendar">
@@ -25,7 +25,7 @@ require __DIR__ . '/../backend/calendar.php';
             </section>
         </div>
         <div class="room_card">
-            <p>$4</p>
+            <h3 class="price">Price: $8</h3>
             <img src="resources/Images/Luxury tent.png" alt="Luxury tent">
             <p>Tent description</p>
             <section class="calendar">

@@ -131,19 +131,18 @@ if (!empty($featuresUsed)) {
 
 $totalPrice = $roomTotal + $featureTotal;
 
-// Loyalty discount
+// Loyalty discount for returning guests
 $discountPercent = 0;
 
-if ($visits >= 5) {
-    $discountPercent = 10;
-} elseif ($visits >= 2) {
-    $discountPercent = 5;
+if ($visits >= 1) {
+    $discountPercent = 8;
 }
 
 if ($discountPercent > 0) {
     $discountAmount = ($totalPrice * $discountPercent) / 100;
     $totalPrice -= $discountAmount;
 }
+
 
 // CENTRAL BANK
 
