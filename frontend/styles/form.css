@@ -1,0 +1,43 @@
+.forms-layout {
+  display: flex;
+  gap: 10px;
+  margin: 40px 16px auto;
+}
+
+.booking-container,
+.transfer-container {
+  flex: 1;
+}
+
+.booking-container {
+  display: flex;
+  justify-content: center;
+}
+
+.booking-container form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 500px;
+  width: 100%;
+}
+
+.booking_info,
+.booking_features {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.transfer-container {
+  display: flex;
+  justify-content: center;
+}
+
+.transfer-container form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 500px;
+  width: 100%;
+}

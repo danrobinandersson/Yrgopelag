@@ -1,0 +1,18 @@
+.feature-container {
+  display: flex;
+  justify-content: space-around;
+}
+
+.feature-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 350px;
+  height: auto;
+}
+
+.feature-card img {
+  border-radius: 50%;
+  width: 300px;
+  height: 300px;
+}

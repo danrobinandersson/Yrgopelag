@@ -12,6 +12,9 @@
 .room_card {
   width: 30%;
   background-color: var(--color-lava-red);
+  border-radius: 20px;
+  box-shadow: 10px 10px 5px var(--color-ash-gray);
+  text-align: center;
 }
 
 img {

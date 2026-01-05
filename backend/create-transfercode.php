@@ -29,7 +29,6 @@ $client = new Client([
 ]);
 
 try {
-    // Call Central Bank withdraw endpoint
     $response = $client->post('withdraw', [
         'json' => [
             'user'    => $user,
