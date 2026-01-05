@@ -6,6 +6,8 @@ require __DIR__ . '/frontend/header.php';
 
 ?>
 
+<?php require __DIR__ . '/frontend/transfercode.php' ?>
+
 <?php require __DIR__ . '/frontend/form.php' ?>
 
 <?php require __DIR__ . '/frontend/rooms.php' ?>
