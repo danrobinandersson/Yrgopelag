@@ -8,11 +8,13 @@ function renderCalendar(int $roomId, array $bookedDays): void
 
     for ($day = 1; $day <= 31; $day++) {
         $class = 'day';
+        $tooltip = '';
 
         if (in_array($day, $roomBookings, true)) {
             $class .= ' booked';
+            $tooltip = ' title="Not available"';
         }
 
-        echo "<div class=\"$class\">$day</div>";
+        echo "<div class=\"$class\"$tooltip>$day</div>";
     }
 }
