@@ -10,13 +10,20 @@
     <link rel="stylesheet" href="frontend/styles/rooms.css">
     <link rel="stylesheet" href="frontend/styles/feature-info.css">
     <link rel="stylesheet" href="frontend/styles/form.css">
+    <link rel="stylesheet" href="frontend/styles/footer.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&family=Story+Script&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 </head>
 
 <body>
 
-    <div class="header_container">
+    <header class="hero">
         <img class="logo" src="resources/Images/Logo-main.png" alt="Logo">
-    </div>
+
+        <div class="hero-content">
+            <h1>Welcome to Lava Ridge Camp</h1>
+            <p>Your adventure starts here!</p>
+        </div>
+    </header>

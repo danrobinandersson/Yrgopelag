@@ -1,0 +1,20 @@
+footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 18rem;
+  width: 100vw;
+  background-color: var(--color-warm-sand);
+  padding: 2rem;
+  text-align: center;
+  gap: 1rem;
+}
+
+.logo_footer {
+  height: 10rem;
+  width: 10rem;
+}
+
+.checked {
+  color: var(--color-molten-orange);
+}
