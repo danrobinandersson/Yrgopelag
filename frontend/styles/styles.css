@@ -4,6 +4,12 @@
   margin: 0;
 }
 
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 :root {
   --color-lava-red: #c0392b;
   --color-brighter-red: #ef0900;
@@ -68,7 +74,7 @@ body {
   flex-direction: column;
   align-items: center;
   gap: 3rem;
-  margin: 2rem;
+  padding: 2rem;
 }
 
 .section-title {
@@ -78,8 +84,6 @@ body {
   font-family: "Story Script", sans-serif;
   font-size: 3rem;
   width: 100%;
-  max-width: 1200px;
-  white-space: nowrap;
 }
 
 .section-title::before,
@@ -116,6 +120,12 @@ input {
 
 input:focus {
   border-color: var(--color-lava-red);
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--color-lava-red);
+  cursor: pointer;
 }
 
 button {
