@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+session_start();
+
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/Services/CentralBankClient.php';
 
@@ -46,6 +48,16 @@ $departure    = $_POST['departure'];
 $roomTier     = $_POST['room'];
 $featuresUsed = $_POST['features'] ?? [];
 $hotelOwner   = 'Robin';
+
+// PACKAGE DEAL DEFINITIONS
+$packageDeals = [
+    [
+        'room' => 'standard',
+        'features' => ['water', 'hotel-specific'],
+        'discount_type' => 'percent',
+        'value' => 10,
+    ],
+];
 
 if ($guestName === '') {
     echo 'Guest name is required';
@@ -98,39 +110,26 @@ if ((int) $stmt->fetchColumn() > 0) {
     exit;
 }
 
-// GUEST LOOKUP (for loyalty discount)
-
-$stmt = $database->prepare(
-    'SELECT id, visits FROM guests WHERE name = :name LIMIT 1'
-);
-$stmt->execute([':name' => $guestName]);
-$guest = $stmt->fetch(PDO::FETCH_ASSOC);
-
-$visits = $guest ? (int) $guest['visits'] : 0;
-
-
 // PRICE CALCULATION
 
 $nights = (int) (new DateTime($arrival))->diff(new DateTime($departure))->days;
 $roomTotal = $roomPrice * $nights;
 
-$featuresUsed = $_POST['features'] ?? [];
-
 $featureIds = array_map('intval', $featuresUsed);
 
-$featureTotal = 0;
+$featureTotal   = 0;
 $featureObjects = [];
 
 if (!empty($featureIds)) {
     $placeholders = implode(',', array_fill(0, count($featureIds), '?'));
     $stmt = $database->prepare(
-        "SELECT id, category, tier, price, feature_name FROM features WHERE id IN ($placeholders)"
+        "SELECT id, category, tier, price
+         FROM features
+         WHERE id IN ($placeholders)"
     );
     $stmt->execute($featureIds);
 
-    $fetchedFeatures = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    foreach ($fetchedFeatures as $feature) {
+    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $feature) {
         $featureTotal += (float) $feature['price'];
         $featureObjects[] = [
             'activity' => $feature['category'],
@@ -141,17 +140,41 @@ if (!empty($featureIds)) {
 
 $totalPrice = $roomTotal + $featureTotal;
 
-// Loyalty discount for returning guests
-$discountPercent = 0;
+// PACKAGE DISCOUNT LOGIC
 
-if ($visits >= 1) {
-    $discountPercent = 8;
+$discountAmount = 0;
+$appliedPackage = null;
+
+foreach ($packageDeals as $deal) {
+    if ($deal['room'] !== $roomTier) {
+        continue;
+    }
+
+    $bookedActivities = array_column($featureObjects, 'activity');
+
+    $hasAllRequiredFeatures = true;
+    foreach ($deal['features'] as $requiredFeature) {
+        if (!in_array($requiredFeature, $bookedActivities, true)) {
+            $hasAllRequiredFeatures = false;
+            break;
+        }
+    }
+
+    if (!$hasAllRequiredFeatures) {
+        continue;
+    }
+
+    if ($deal['discount_type'] === 'fixed') {
+        $discountAmount = $deal['value'];
+    } else {
+        $discountAmount = ($totalPrice * $deal['value']) / 100;
+    }
+
+    $appliedPackage = $deal;
+    break;
 }
 
-if ($discountPercent > 0) {
-    $discountAmount = ($totalPrice * $discountPercent) / 100;
-    $totalPrice -= $discountAmount;
-}
+$totalPrice = max(0, $totalPrice - $discountAmount);
 
 // CENTRAL BANK
 
@@ -172,7 +195,7 @@ try {
 
     // Guest lookup
     $stmt = $database->prepare(
-        'SELECT id, visits FROM guests WHERE name = :name LIMIT 1'
+        'SELECT id FROM guests WHERE name = :name LIMIT 1'
     );
     $stmt->execute([':name' => $guestName]);
     $guest = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -232,43 +255,18 @@ try {
     exit;
 }
 
-// SEND RECEIPT (AFTER COMMIT)
+// SESSION CONFIRMATION DATA
 
-// Build features_used for receipt (category + tier)
-$featureObjects = [];
+$_SESSION['booking_confirmation'] = [
+    'guestName'      => $guestName,
+    'arrival'        => $arrival,
+    'departure'      => $departure,
+    'totalPrice'     => $totalPrice,
+    'transferCode'   => $transferCode,
+    'features'       => $featureObjects,
+    'package'        => $appliedPackage,
+    'discountAmount' => $discountAmount,
+];
 
-if (!empty($featuresUsed)) {
-    $placeholders = implode(',', array_fill(0, count($featuresUsed), '?'));
-
-    $stmt = $database->prepare(
-        "SELECT category, tier
-         FROM features
-         WHERE feature_name IN ($placeholders)"
-    );
-
-    $stmt->execute($featuresUsed);
-
-    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $feature) {
-        $featureObjects[] = [
-            'activity' => $feature['category'],
-            'tier'     => $feature['tier'],
-        ];
-    }
-}
-
-// CONFIRMATION
-
-echo '<h2>Booking confirmed</h2>';
-echo '<p>Thank you, ' . htmlspecialchars($guestName) . '!</p>';
-echo '<p><strong>Arrival:</strong> ' . $arrival . '</p>';
-echo '<p><strong>Departure:</strong> ' . $departure . '</p>';
-echo '<p><strong>Total price:</strong> $' . number_format($totalPrice, 2) . '</p>';
-echo '<p><strong>Booking reference:</strong> ' . htmlspecialchars($transferCode) . '</p>';
-
-if (!empty($featureObjects)) {
-    $featureNames = array_map(fn($f) => $f['feature_name'], $featureObjects);
-    echo '<p><strong>Features:</strong> ' . htmlspecialchars(implode(', ', $featureNames)) . '</p>';
-}
-if ($discountPercent > 0) {
-    echo '<p><strong>Loyalty discount:</strong> ' . $discountPercent . '%</p>';
-}
+header('Location: booking-confirmed.php');
+exit;
