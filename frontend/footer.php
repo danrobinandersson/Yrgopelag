@@ -13,5 +13,5 @@
         <p>Website by <strong>Robin Andersson</strong></p>
     </footer>
 
-    <script src="/frontend/scripts/scripts.js"></script>
+    <script src="frontend/scripts/scripts.js"></script>
     </body>

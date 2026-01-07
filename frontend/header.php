@@ -5,9 +5,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Lava Ridge Camp</title>
+
     <link rel="stylesheet" href="frontend/styles/styles.css">
     <link rel="stylesheet" href="frontend/styles/header.css">
     <link rel="stylesheet" href="frontend/styles/rooms.css">
+    <link rel="stylesheet" href="frontend/styles/calendar.css">
+    <link rel="stylesheet" href="frontend/styles/discount-banner.css">
     <link rel="stylesheet" href="frontend/styles/feature-info.css">
     <link rel="stylesheet" href="frontend/styles/form.css">
     <link rel="stylesheet" href="frontend/styles/footer.css">

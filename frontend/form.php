@@ -4,7 +4,7 @@
     <div class="forms-container">
 
         <div class="form-column">
-            <form action="/backend/booking.php" method="POST">
+            <form action="backend/booking.php" method="POST">
                 <h2>Make a booking</h2>
 
                 <div class="booking-info">
@@ -44,24 +44,24 @@
                     <h3>Select features</h3>
                     <h4 class="features">Adventure</h4>
                     <label class="block ml-2">
-                        <input class="mr-2" type="checkbox" name="features[]" value="13" data-price="2">
+                        <input class="mr-2" type="checkbox" name="features[]" value="13" data-price="2" data-category="hotel-specific">
                         Marshmallow roasting over lava stream (Economy, $2)
                     </label>
                     <label class="block ml-2">
-                        <input class="mr-2" type="checkbox" name="features[]" value="14" data-price="5">
+                        <input class="mr-2" type="checkbox" name="features[]" value="14" data-price="5" data-category="hotel-specific">
                         Access to marked island trails (Basic, $5)
                     </label>
                     <label class="block ml-2">
-                        <input class="mr-2" type="checkbox" name="features[]" value="15" data-price="10">
+                        <input class="mr-2" type="checkbox" name="features[]" value="15" data-price="10" data-category="hotel-specific">
                         Volcano tour with expert guide (Premium, $10)
                     </label>
                     <label class="block ml-2">
-                        <input class="mr-2" type="checkbox" name="features[]" value="16" data-price="17">
+                        <input class="mr-2" type="checkbox" name="features[]" value="16" data-price="17" data-category="hotel-specific">
                         Skydiving over volcano (Superior, $17)
                     </label>
                     <h3 class="features">Water</h3>
                     <label class="block ml-2">
-                        <input class="mr-2" type="checkbox" name="features[]" value="1" data-price="2">
+                        <input class="mr-2" type="checkbox" name="features[]" value="1" data-price="2" data-category="water">
                         Pool (Basic, $2)
                 </div>
                 <button type="submit">Submit</button>
@@ -70,7 +70,7 @@
 
         <div class="form-column">
             <div class="transfer-container">
-                <form action="/backend/create-transfercode.php" method="POST">
+                <form action="backend/create-transfercode.php" method="POST">
                     <h2>Create Transfercode</h2>
 
                     <label for="user">Username</label>
@@ -89,7 +89,12 @@
             <div class="total-container">
                 <h3>Price Summary</h3>
                 <p>Tent: $<span id="room-price">0</span> × <span id="nights">0</span> nights</p>
-                <p> Features: $<span id="features-price">0</span></p>
+                <p>Features: $<span id="features-price">0</span></p>
+
+                <p id="discount-line" style="display:none;">
+                    Package discount: −$<span id="discount-amount">0</span>
+                </p>
+
                 <h2>Your Total: $<span id="total-price">0</span></h2>
             </div>
 

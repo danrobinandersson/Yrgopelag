@@ -38,7 +38,7 @@
   margin: 1rem 0;
   background: linear-gradient(
     90deg,
-    var(--color-lava-red),
+    var(--color-brighter-red),
     var(--color-molten-orange),
     var(--color-brighter-red)
   );
@@ -50,10 +50,7 @@
   gap: 0.5rem;
 }
 
-.form-room-options label {
-  font-weight: normal;
-}
-
+.form-room-options label,
 .booking-features label {
   font-weight: normal;
 }

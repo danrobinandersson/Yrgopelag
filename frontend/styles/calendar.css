@@ -1,0 +1,24 @@
+.calendar {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  max-width: 100%;
+}
+
+.day {
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-warm-sand);
+  border-radius: 6px;
+  color: var(--color-text-dark);
+  font-size: 0.9rem;
+  cursor: default;
+}
+
+.booked {
+  background: var(--color-lava-red);
+  color: var(--color-text-light);
+  font-weight: 600;
+}

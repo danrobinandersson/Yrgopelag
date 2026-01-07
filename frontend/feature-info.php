@@ -20,7 +20,7 @@
         <div class="feature-card">
             <h2>Volcano skydiving</h2>
             <img src="resources/Images/feature images/Skydiving.jpg" alt="Skydiving image">
-            <p>Do you think skydiving sounds cool? well.. imagine skyding over an active volcano! Now that's seriusly cool (or maybe not cool, it can get a bit hot sometimes.. but you understand my point). Take this unique chance and earn the bragging rights that comes with a successful jump, and don't worry, we have quite a decent safety reckord so far. </p>
+            <p>Do you think skydiving sounds cool? well.. imagine skyding over an active volcano! Now that's seriusly cool (or maybe not cool, it can get a bit hot sometimes..). </p>
         </div>
     </div>
 </section>

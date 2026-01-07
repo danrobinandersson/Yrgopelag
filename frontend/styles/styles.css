@@ -8,21 +8,22 @@ html,
 body {
   max-width: 100%;
   overflow-x: hidden;
+  font-family: "Roboto";
 }
+
+/* Color palette */
 
 :root {
   --color-lava-red: #c0392b;
   --color-brighter-red: #ef0900;
   --color-molten-orange: #ff8a2c;
-  --color-charcoal-black: #1c1c1c;
-  --color-jungle-green: #2e7d32;
-  --color-ash-gray: #7f8c8d;
   --color-warm-sand: #efe6d8;
-  --color-text-dark: #1c1c1c;
-  --color-text-light: #ffffff;
   --color-border-muted: #dadada;
-  --color-volcano-brown: #372621;
+  --color-text-light: #ffffff;
+  --color-text-dark: #1c1c1c;
 }
+
+/* Fonts */
 
 .roboto {
   font-family: "Roboto", sans-serif;
@@ -38,36 +39,7 @@ body {
   font-style: normal;
 }
 
-body {
-  font-family: "Roboto";
-}
-
-/* calendar */
-.calendar {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
-  max-width: 100%;
-}
-
-.day {
-  aspect-ratio: 1 / 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--color-warm-sand);
-  border-radius: 6px;
-  color: var(--color-text-dark);
-  font-size: 0.9rem;
-  transition: background 0.2s, transform 0.1s;
-  cursor: default;
-}
-
-.booked {
-  background: var(--color-lava-red);
-  color: white;
-  font-weight: 600;
-}
+/* Unified styling for all sections */
 
 .section {
   display: flex;
@@ -109,6 +81,8 @@ body {
     var(--color-brighter-red)
   );
 }
+
+/* Unified styling for all inputs and buttons */
 
 input {
   padding: 0.5rem 1rem;
