@@ -45,6 +45,11 @@ Configuration: Environment variables for sensitive credentials
 
 4. Set up the SQL database and run the provided schema/migrations
 
+To create a new database (or reset the existing one) with all tables and data, run the following command in your terminal from anywhere: php backend/reset-database.php
+
+If successful you will get the following terminal message:
+✅ Database reset successfully: backend/database/database.db
+
 5. Configure your local web server to point to the project directory
 
 6. Start the server and open the site in your browser
