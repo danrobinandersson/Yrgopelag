@@ -2,8 +2,6 @@
 
 declare(strict_types=1);
 
-// Reset Hotel Booking Database
-
 $databasePath = __DIR__ . '/database/database.db';
 
 try {
@@ -14,7 +12,6 @@ try {
     // Temporarily disable foreign key checks
     $db->exec('PRAGMA foreign_keys = OFF;');
 
-    // Drop tables 
     $tables = ['bookings_features', 'bookings', 'features', 'rooms', 'guests'];
     foreach ($tables as $table) {
         $db->exec("DROP TABLE IF EXISTS $table;");
@@ -23,7 +20,6 @@ try {
     // Re-enable foreign key checks
     $db->exec('PRAGMA foreign_keys = ON;');
 
-    // Create tables 
     $db->exec("
         CREATE TABLE guests (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -68,7 +64,6 @@ try {
         );
     ");
 
-    // Insert data
     $db->exec("
         INSERT INTO rooms (tier, price_per_night, description) VALUES
         ('economy', 4, 'Basic room, don''t let the bed bugs bite!'),
