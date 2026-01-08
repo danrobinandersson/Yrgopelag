@@ -43,16 +43,15 @@ Configuration: Environment variables for sensitive credentials
 
 3. Create a .env file in the project root and add your API key and database configuration
 
-4. Set up the SQL database and run the provided schema/migrations
+4. Run the following command to create or reset the database:
+   php backend/reset-database.php
 
-To create a new database (or reset the existing one) with all tables and data, run the following command in your terminal from anywhere: php backend/reset-database.php
+   If successful you will get the following terminal message:
+   ✅ Database reset successfully: backend/database/database.db
 
-If successful you will get the following terminal message:
-✅ Database reset successfully: backend/database/database.db
+5. Start a localhost in the terminal: php -S localhost:8000;
 
-5. Configure your local web server to point to the project directory
-
-6. Start the server and open the site in your browser
+6. Open the site in your browser
 
 # Limitations and future improvements
 

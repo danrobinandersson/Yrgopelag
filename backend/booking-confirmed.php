@@ -37,3 +37,7 @@ unset($_SESSION['booking_confirmation']); // prevent refresh reuse
         (<?= $data['package']['value'] ?>% off)
     </p>
 <?php endif; ?>
+
+<p>
+    <a href="/?refresh=1">Back to main page</a>
+</p>
