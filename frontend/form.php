@@ -80,7 +80,7 @@
                     <input type="text" name="api_key" id="api_key" placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX" required>
 
                     <label for="amount">Amount</label>
-                    <input type="number" name="amount" id="amount" min="1" required>
+                    <input type="number" name="amount" id="amount" min="0.01" step="0.01" required>
 
                     <button type="submit">Create transfercode</button>
                 </form>

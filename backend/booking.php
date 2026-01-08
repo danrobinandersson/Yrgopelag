@@ -249,6 +249,19 @@ try {
     }
 
     $database->commit();
+
+    // send receipt to central bank
+
+    if (!$centralBank->sendReceipt(
+        $hotelOwner,
+        $guestName,
+        $arrival,
+        $departure,
+        $featureObjects,
+        3 // hotel star rating
+    )) {
+        error_log('Receipt failed for booking ' . $bookingId);
+    }
 } catch (Throwable $e) {
     $database->rollBack();
     echo 'Booking failed. Please try again.';

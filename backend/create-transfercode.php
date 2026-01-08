@@ -15,7 +15,7 @@ if (!isset($_POST['user'], $_POST['api_key'], $_POST['amount'])) {
 
 $user   = trim($_POST['user']);
 $apiKey = trim($_POST['api_key']);
-$amount = (int) $_POST['amount'];
+$amount = (float) $_POST['amount'];
 
 if ($user === '' || $apiKey === '' || $amount <= 0) {
     echo 'All fields are required and amount must be positive';
